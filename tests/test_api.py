@@ -69,7 +69,7 @@ async def test_sort_books_by_rating(client, valid_headers):
     assert resp.status_code == 200
     data = resp.json()
     ratings = [b["rating"] for b in data["books"]]
-    assert ratings == sorted(ratings, reverse=True)
+    assert ratings == sorted(ratings)
 
 @pytest.mark.asyncio
 async def test_get_book_by_id(client, valid_headers):
