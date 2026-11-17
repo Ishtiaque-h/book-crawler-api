@@ -106,7 +106,7 @@ async def test_get_changes(client, valid_headers):
     assert "total_count" in data
     assert "page" in data
     assert "changes" in data
-    assert isinstance(data["changes", list])
+    assert isinstance(data["changes"], list)
     
     if data["changes"]:
         first_change = data["changes"][0]
@@ -115,7 +115,7 @@ async def test_get_changes(client, valid_headers):
 
 
 @pytest.mark.asyncio
-async def test_rate_limiting(client, valid_headers):
+async def test_rate_limiting(client, valid_headers, reset_rate_limiter):
     for _ in range(100):
         resp = await client.get("/books", headers=valid_headers)
         assert resp.status_code == 200
