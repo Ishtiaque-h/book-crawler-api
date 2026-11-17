@@ -123,7 +123,7 @@ async def test_rate_limiting(client, valid_headers):
     resp = await client.get("/books", headers=valid_headers)
     assert resp.status_code == 429
 
-@pytest.fixtures
+@pytest.fixture
 def reset_rate_limiter():
     limiter.reset()
 
