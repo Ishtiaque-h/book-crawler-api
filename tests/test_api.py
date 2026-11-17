@@ -2,7 +2,8 @@ import asyncio, sys, pytest, pytest_asyncio
 from unittest.mock import patch
 from httpx import AsyncClient, ASGITransport
 from utils.settings import settings
-from api.main import app
+from api.main import app, limiter
+
 
 
 if sys.platform.startswith("win"):
@@ -116,6 +117,16 @@ async def test_get_changes(client, valid_headers):
 @pytest.mark.asyncio
 async def test_rate_limiting(client, valid_headers):
     for _ in range(100):
-        await client.get("/books", headers=valid_headers)
+        resp = await client.get("/books", headers=valid_headers)
+        assert resp.status_code == 200
+
     resp = await client.get("/books", headers=valid_headers)
-    assert resp.status_code in (200, 429)
+    assert resp.status_code == 429
+
+@pytest.fixtures
+def reset_rate_limiter():
+    limiter.reset()
+
+    yield
+
+    limiter.reset()
