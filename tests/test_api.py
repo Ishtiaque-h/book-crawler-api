@@ -101,10 +101,16 @@ async def test_get_changes(client, valid_headers):
     resp = await client.get("/changes", headers=valid_headers)
     assert resp.status_code == 200
     data = resp.json()
-    assert isinstance(data, list)
-    if data:
-        assert "type" in data[0]
-        assert "book_id" in data[0]
+    assert isinstance(data, dict)
+    assert "total_count" in data
+    assert "page" in data
+    assert "changes" in data
+    assert isinstance(data["changes", list])
+    
+    if data["changes"]:
+        first_change = data["changes"][0]
+        assert "type" in first_change
+        assert "book_id" in first_change
 
 
 @pytest.mark.asyncio
