@@ -159,6 +159,20 @@ async def test_sort_books_by_rating(client, valid_headers):
     ]
 
 @pytest.mark.asyncio
+async def test_sort_books_by_rating_descending(client, valid_headers):
+    resp = await client.get("/books", headers=valid_headers, params={"sort_by": "rating", "sort_order": "desc"})
+    assert resp.status_code == 200
+    data = resp.json()
+    ratings = [book["rating"] for book in data["books"]]
+    titles = [book["title"] for book in data["books"]]   
+    assert ratings == [5, 3, 2]
+    assert titles == [
+        "Science Book",
+        "History Book",
+        "Poetry Book",
+    ]
+
+@pytest.mark.asyncio
 async def test_get_book_by_id(client, valid_headers, seeded_test_db):
 
     known_book = seeded_test_db["books"][0]
