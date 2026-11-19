@@ -3,3 +3,4 @@
 logs/
 change_reports/
 .pytest_cache/
+.vscode
