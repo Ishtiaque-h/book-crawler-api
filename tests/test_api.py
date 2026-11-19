@@ -3,15 +3,86 @@ from unittest.mock import patch
 from httpx import AsyncClient, ASGITransport
 from utils.settings import settings
 from api.main import app, limiter
-
+from datetime import datetime
+from bson import ObjectId
+from motor.motor_asyncio import AsyncIOMotorClient
+import api.main as api_main
 
 
 if sys.platform.startswith("win"):
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
+TEST_DB_NAME = "book_crawler_pytest"
 
 @pytest_asyncio.fixture
-async def client():
+async def seeded_test_db(monkeypatch):
+    # Safety guard: never allow destructive test cleanup
+    # against a non-test database.
+    assert "test" in TEST_DB_NAME.lower() or "pytest" in TEST_DB_NAME.lower()
+
+    test_client = AsyncIOMotorClient(settings.MONGO_URI)
+    test_db = test_client[TEST_DB_NAME]
+
+    # Start every test from a known state
+    await test_db.books.delete_many({})
+    await test_db.changes.delete_many({})
+
+    books = [
+        {
+            "_id": ObjectId(),
+            "title": "Poetry Book",
+            "category": "Poetry",
+            "price_incl": 15.0,
+            "rating": 2,
+            "num_reviews": 10,
+            "crawled_at": datetime(2026, 1, 1),
+        },
+        {
+            "_id": ObjectId(),
+            "title": "Science Book",
+            "category": "Science",
+            "price_incl": 45.0,
+            "rating": 5,
+            "num_reviews": 25,
+            "crawled_at": datetime(2026, 1, 2),
+        },
+        {
+            "_id": ObjectId(),
+            "title": "History Book",
+            "category": "History",
+            "price_incl": 80.0,
+            "rating": 3,
+            "num_reviews": 5,
+            "crawled_at": datetime(2026, 1, 3),
+        },
+    ]
+
+    await test_db.books.insert_many(books)
+    await test_db.changes.insert_one(
+        {
+            "book_id": books[0]["_id"],
+            "type": 1,
+            "updated_at": datetime(2026, 1, 4),
+            "data": {},
+        }
+    )
+
+    # Make the FastAPI endpoints use the test DB
+    monkeypatch.setattr(api_main, "db", test_db)
+
+    yield {
+        "db": test_db,
+        "books": books,
+    }
+
+    # Cleanup only the dedicated test DB
+    await test_db.books.delete_many({})
+    await test_db.changes.delete_many({})
+
+    test_client.close()
+
+@pytest_asyncio.fixture
+async def client(seeded_test_db):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
@@ -73,28 +144,20 @@ async def test_sort_books_by_rating(client, valid_headers):
     assert ratings == sorted(ratings)
 
 @pytest.mark.asyncio
-async def test_get_book_by_id(client, valid_headers):
-    list_resp = await client.get("/books", headers=valid_headers)
-    assert list_resp.status_code == 200
+async def test_get_book_by_id(client, valid_headers, seeded_test_db):
 
-    data = list_resp.json()
-    books = data.get("books", [])
-    assert isinstance(books, list)
-
-    if not books:
-        pytest.skip("No books found to test /books/{book_id}")
-
-    first_book = books[0]
-    book_id = str(first_book.get("_id"))
+    known_book = seeded_test_db["books"][0]
+    book_id = str(known_book["_id"])
 
     detail_resp = await client.get(f"/books/{book_id}", headers=valid_headers)
-    assert detail_resp.status_code in (200, 404)
+    assert detail_resp.status_code == 200
 
-    if detail_resp.status_code == 200:
-        book_data = detail_resp.json()
-        assert "title" in book_data
-        assert "price_incl" in book_data
-        assert book_data["_id"] == book_id
+    data = detail_resp.json()
+    assert data["_id"] == book_id
+    assert data["title"] == "Poetry Book"
+    assert data["category"] == "Poetry"
+    assert data["price_incl"] == 15.0
+    assert data["rating"] == 2
 
 
 @pytest.mark.asyncio
