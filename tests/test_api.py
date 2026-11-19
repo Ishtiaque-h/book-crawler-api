@@ -116,13 +116,16 @@ async def test_get_books_with_auth(client, valid_headers):
 
 @pytest.mark.asyncio
 async def test_filter_books_by_category(client, valid_headers):
-    resp = await client.get("/books", headers=valid_headers, params={"category": "Poetry"})
+    resp = await client.get("/books", headers=valid_headers, params={"category": "poetry"})
     print("--------------------Response--------------------")
     print(resp)
     assert resp.status_code == 200
     data = resp.json()
-    assert all("Poetry" in b["category"] for b in data["books"])
-
+    assert data["total_count"] == 1
+    assert len(data["books"]) == 1
+    book = data["books"][0]
+    assert book["title"] == "Poetry Book"
+    assert book["category"] == "Poetry"
 
 @pytest.mark.asyncio
 async def test_filter_books_by_price_range(client, valid_headers):
@@ -131,6 +134,10 @@ async def test_filter_books_by_price_range(client, valid_headers):
     )
     assert resp.status_code == 200
     data = resp.json()
+    assert data["total_count"] == 2
+    assert len(data["books"]) == 2
+    titles = {book["title"] for book in data["books"]}
+    assert titles == {"Poetry Book", "Science Book"}
     for book in data["books"]:
         assert 10 <= book["price_incl"] <= 50
 
@@ -140,8 +147,16 @@ async def test_sort_books_by_rating(client, valid_headers):
     resp = await client.get("/books", headers=valid_headers, params={"sort_by": "rating"})
     assert resp.status_code == 200
     data = resp.json()
-    ratings = [b["rating"] for b in data["books"]]
-    assert ratings == sorted(ratings)
+    assert data["total_count"] == 3
+    assert len(data["books"]) == 3
+    ratings = [book["rating"] for book in data["books"]]
+    titles = [book["title"] for book in data["books"]]   
+    assert ratings == [2, 3, 5]
+    assert titles == [
+        "Poetry Book",
+        "History Book",
+        "Science Book",
+    ]
 
 @pytest.mark.asyncio
 async def test_get_book_by_id(client, valid_headers, seeded_test_db):
