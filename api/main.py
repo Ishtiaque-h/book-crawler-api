@@ -51,19 +51,14 @@ async def get_books(
         final_query["rating"] = params.rating
         
     sort = []
-    sort_by_ = []
     if params.sort_by:
-        sort_by_ = params.sort_by.split("|")
-        sort_direction = 1
-        
-        if len(sort_by_)>1 and sort_by_[1]=="desc":
-            sort_direction = -1
-        
-        if sort_by_[0] == "rating":
+        sort_direction = -1 if params.sort_order == "desc" else 1
+
+        if params.sort_by == "rating":
             sort = [("rating", sort_direction)]
-        elif sort_by_[0] == "price":
+        elif params.sort_by == "price":
             sort = [("price_incl", sort_direction)]
-        elif sort_by_[0] == "reviews":
+        elif params.sort_by == "reviews":
             sort = [("num_reviews", sort_direction)]
         
     skip = (params.page - 1) * params.page_size

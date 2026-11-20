@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Literal
 from pydantic import BaseModel, Field
 
 class QueryParams(BaseModel):
@@ -7,11 +7,8 @@ class QueryParams(BaseModel):
     min_price: Optional[float] = None
     max_price: Optional[float] = None
     rating: Optional[int] = None
-    sort_by: Optional[str] = Field(
-        None,
-        pattern="^(rating|price|reviews)$",
-        description="Sort by rating, price or reviews"
-    )
+    sort_by: Optional[Literal["rating", "price", "reviews"]] = None
+    sort_order: Literal["asc", "desc"] = "asc"
     page: int = 1
     page_size: int = 20
 

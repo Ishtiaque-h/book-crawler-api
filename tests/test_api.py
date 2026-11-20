@@ -171,6 +171,11 @@ async def test_sort_books_by_rating_descending(client, valid_headers):
         "History Book",
         "Poetry Book",
     ]
+
+@pytest.mark.asyncio
+async def test_invalid_sort_order(client, valid_headers):
+    resp = await client.get("/books", headers=valid_headers, params={"sort_by": "rating", "sort_order": "sideways"})
+    assert resp.status_code == 422      # Unprocessable Entity
    
 @pytest.mark.asyncio
 async def test_get_book_by_id(client, valid_headers, seeded_test_db):
