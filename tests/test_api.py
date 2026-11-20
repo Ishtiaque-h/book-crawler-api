@@ -266,7 +266,7 @@ async def test_pagination_boundaries(client, valid_headers):
     ],
 )
 async def test_invalid_changes_pagination(client, valid_headers, params):
-    resp = await client.get("/books", headers=valid_headers, params=params)
+    resp = await client.get("/changes", headers=valid_headers, params=params)
     assert resp.status_code == 422
 
 @pytest.mark.asyncio
