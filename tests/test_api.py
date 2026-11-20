@@ -171,7 +171,7 @@ async def test_sort_books_by_rating_descending(client, valid_headers):
         "History Book",
         "Poetry Book",
     ]
-
+   
 @pytest.mark.asyncio
 async def test_get_book_by_id(client, valid_headers, seeded_test_db):
 
@@ -188,6 +188,19 @@ async def test_get_book_by_id(client, valid_headers, seeded_test_db):
     assert data["price_incl"] == 15.0
     assert data["rating"] == 2
 
+@pytest.mark.asyncio
+async def test_get_book_with_invalid_id(client, valid_headers):
+    book_id = "not-a-valid-object-id"
+    resp = await client.get(f"/books/{book_id}", headers=valid_headers)
+    assert resp.status_code == 400
+    assert resp.json()["detail"] == "invalid id"
+
+@pytest.mark.asyncio
+async def test_get_book_with_nonexistent_id(client, valid_headers):
+    missing_book_id = str(ObjectId())
+    resp = await client.get(f"/books/{missing_book_id}", headers=valid_headers)
+    assert resp.status_code == 404
+    assert resp.json()["detail"] == "not found"
 
 @pytest.mark.asyncio
 async def test_get_changes(client, valid_headers):
