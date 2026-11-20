@@ -9,6 +9,6 @@ class QueryParams(BaseModel):
     rating: Optional[int] = None
     sort_by: Optional[Literal["rating", "price", "reviews"]] = None
     sort_order: Literal["asc", "desc"] = "asc"
-    page: int = 1
-    page_size: int = 20
+    page: int = Field(default=1, ge= 1)
+    page_size: int = Field(default=20, ge=1, le=100)
 

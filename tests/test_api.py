@@ -175,7 +175,7 @@ async def test_sort_books_by_rating_descending(client, valid_headers):
 @pytest.mark.asyncio
 async def test_invalid_sort_order(client, valid_headers):
     resp = await client.get("/books", headers=valid_headers, params={"sort_by": "rating", "sort_order": "sideways"})
-    assert resp.status_code == 422      # Unprocessable Entity
+    assert resp.status_code == 422      
    
 @pytest.mark.asyncio
 async def test_get_book_by_id(client, valid_headers, seeded_test_db):
@@ -240,3 +240,44 @@ def reset_rate_limiter():
     yield
 
     limiter.reset()
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("params", [{"page": 0}, {"page": -1}, {"page_size": 0}, {"page_size": 101}])
+async def test_invalid_pagination(client, valid_headers, params):
+    resp = await client.get("/books", headers=valid_headers, params=params)
+    assert resp.status_code == 422
+
+@pytest.mark.asyncio
+async def test_pagination_boundaries(client, valid_headers):
+    resp = await client.get("/books", headers=valid_headers, params={"page": 1, "page_size": 1})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["page"] == 1
+    assert len(data["books"]) == 1
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"page": 0},
+        {"page": -1},
+        {"page_size": 0},
+        {"page_size": 101},
+    ],
+)
+async def test_invalid_changes_pagination(client, valid_headers, params):
+    resp = await client.get("/books", headers=valid_headers, params=params)
+    assert resp.status_code == 422
+
+@pytest.mark.asyncio
+async def test_changes_pagination_boundary(client, valid_headers):
+    resp = await client.get(
+        "/changes",
+        headers=valid_headers,
+        params={"page": 1, "page_size": 1},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["page"] == 1
+    assert data["total_count"] == 1
+    assert len(data["changes"]) == 1

@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import FastAPI, HTTPException, Depends, Request, Security
+from fastapi import FastAPI, HTTPException, Depends, Request, Security, Query
 from fastapi.security.api_key import APIKeyHeader
 from fastapi.openapi.models import APIKey
 from fastapi.openapi.utils import get_openapi
@@ -108,8 +108,8 @@ async def get_single_book(
 @limiter.limit(rate_limit)
 async def get_changes(
     request: Request,
-    page:int=1,
-    page_size:int=20,
+    page:int = Query(default=1,ge=1),
+    page_size:int = Query(default=20, ge=1, le=100),
     authorized: bool = Security(check_api_key)):
     
     skip = (page - 1) * page_size
