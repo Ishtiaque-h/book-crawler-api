@@ -109,7 +109,7 @@ def parse_book_page(html: str, source_url: str) -> dict:
     return data
 
 def get_file_name(today, page_no):
-    report_file = f"Change-Log-{today.strftime("%Y.%m.%d")}-{page_no}.json"
+    report_file = f"Change-Log-{today.strftime('%Y.%m.%d')}-{page_no}.json"
     report_file = Path(f"change_reports/{report_file}").resolve()    
     report_file.parent.mkdir(parents=True, exist_ok=True)
     return report_file
@@ -267,7 +267,7 @@ async def crawl_books(crawler_type:CrawlerType):
     logger.info(log_message)
     
     if crawler_type==CrawlerType.Scheduler and settings.GENERATE_CHANGE_REPORT:
-        log_message = f"Generating Daily Change Report for {today.strftime("%d-%m-%Y")}"
+        log_message = f"Generating Daily Change Report for {today.strftime('%d-%m-%Y')}"
         print(log_message)
         logger.info(log_message)
         
@@ -303,7 +303,7 @@ async def crawl_books(crawler_type:CrawlerType):
             page_count += 1
         
         
-        log_message = f"Daily Change Report Generation for {today.strftime("%d-%m-%Y")} Complete"
+        log_message = f"Daily Change Report Generation for {today.strftime('%d-%m-%Y')} Complete"
         print(log_message)
         logger.info(log_message)
         
